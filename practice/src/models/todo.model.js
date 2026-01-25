@@ -2,7 +2,7 @@ import mongoose , {Schema} from "mongoose";
 
 
 const todoSchema = new Schema({
-    todo:{
+    todoTitle:{
         type: String,
         required: true,
     },
@@ -13,9 +13,11 @@ const todoSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ["pending" , "compeleted"],
+        enum: ["pending" , "completed"],
         default: "pending"
     }
 } , {timestamps: true})
 
 export const Todo = mongoose.model("Todo" , todoSchema)
+
+export default Todo;
