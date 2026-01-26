@@ -1,4 +1,4 @@
-import Todo from "../models/todo.model.js"
+import {Todo} from "../models/todo.model.js"
 
 export const createTodo = async (req , res) => {
     try {
@@ -20,7 +20,7 @@ export const createTodo = async (req , res) => {
     }
 }
 
-export const getTodo = async(res , req) => {
+export const getTodo = async(req , res) => {
     try {
         const todo = await Todo.find({user: req.user._id})
         res.json(todo)
@@ -29,7 +29,7 @@ export const getTodo = async(res , req) => {
     }
 }
 
-export const updatedTodo = async(res , req) => {
+export const updatedTodo = async(req , res) => {
     try {
         const todo = await Todo.findById(req.params.id);
 
@@ -55,7 +55,7 @@ export const updatedTodo = async(res , req) => {
     }
 }
 
-export const deleteTodo = async(res , req) => {
+export const deleteTodo = async(req , res) => {
     try {
         const todo = await Todo.findById(req.params.id);
         
@@ -67,8 +67,7 @@ export const deleteTodo = async(res , req) => {
             return res.status(401).json({ message: 'not authorized !!!' });
 
         }
-
-        const deleteTodo = await Todo.deleteOne();
+         await Todo.deleteOne();
         res.json({message : "Todo removed "})
     } catch (error) {
         return res.status(400).json({ message: 'Failed to delete todo !!!' });
