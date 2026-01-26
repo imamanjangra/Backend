@@ -1,11 +1,5 @@
 import { useState } from "react"
-import {
-  CheckCircle,
-  XCircle,
-  Trash2,
-  Edit,
-  Save,
-} from "lucide-react"
+import { CheckCircle, XCircle, Trash2, Edit, Save } from "lucide-react"
 
 const priorityColors = {
   high: "bg-red-100 text-red-700",
@@ -15,26 +9,25 @@ const priorityColors = {
 
 const TodoItem = ({ todo, onDelete, onToggle, onEdit }) => {
   const [isEditing, setIsEditing] = useState(false)
-  const [newText, setNewText] = useState(todo.text)
+  const [newText, setNewText] = useState(todo.todoTitle)
 
   const saveEdit = () => {
-    onEdit(todo.id, newText)
+    onEdit(todo._id, newText)
     setIsEditing(false)
   }
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow flex justify-between items-center">
-      {/* Left */}
+    <div className="bg-white p-4 rounded-lg shadow flex justify-between">
       <div className="flex items-center gap-3">
-        {todo.completed ? (
+        {todo.status === "completed" ? (
           <CheckCircle
             className="text-green-500 cursor-pointer"
-            onClick={() => onToggle(todo.id)}
+            onClick={() => onToggle(todo)}
           />
         ) : (
           <XCircle
             className="text-gray-400 cursor-pointer"
-            onClick={() => onToggle(todo.id)}
+            onClick={() => onToggle(todo)}
           />
         )}
 
@@ -46,13 +39,13 @@ const TodoItem = ({ todo, onDelete, onToggle, onEdit }) => {
           />
         ) : (
           <span
-            className={`${
-              todo.completed
+            className={`font-medium ${
+              todo.status === "completed"
                 ? "line-through text-gray-400"
                 : ""
-            } font-medium`}
+            }`}
           >
-            {todo.text}
+            {todo.todoTitle}
           </span>
         )}
 
@@ -63,8 +56,7 @@ const TodoItem = ({ todo, onDelete, onToggle, onEdit }) => {
         </span>
       </div>
 
-      {/* Right */}
-      <div className="flex items-center gap-3">
+      <div className="flex gap-3">
         {isEditing ? (
           <Save
             className="text-blue-500 cursor-pointer"
@@ -79,7 +71,7 @@ const TodoItem = ({ todo, onDelete, onToggle, onEdit }) => {
 
         <Trash2
           className="text-red-500 cursor-pointer"
-          onClick={() => onDelete(todo.id)}
+          onClick={() => onDelete(todo._id)}
         />
       </div>
     </div>

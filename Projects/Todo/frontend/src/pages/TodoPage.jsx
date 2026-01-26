@@ -1,65 +1,122 @@
-import { useState } from "react"
-import TodoItem from "../components/TodoItem"
+import { useContext, useEffect, useState } from "react";
+import API from "../services/api";
+import TodoItem from "../components/TodoItem";
+import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const TodoPage = () => {
-  const [todos, setTodos] = useState([])
-  const [text, setText] = useState("")
-  const [priority, setPriority] = useState("medium")
+  const [todos, setTodos] = useState([]);
+  const [text, setText] = useState("");
+  const [priority, setPriority] = useState("medium");
+  const [loading, setLoading] = useState(false);
+const { user, logout } = useContext(AuthContext);
+const navigate = useNavigate()
 
-  const addTodo = () => {
-    if (!text) return
+const handleLogout = () => {
+    logout();
+    navigate("/");  // redirect to login page
+  };
 
-    setTodos([
-      ...todos,
-      {
-        id: Date.now(),
-        text,
-        completed: false,
+  // 🔹 Fetch todos
+  const fetchTodos = async () => {
+    try {
+      setLoading(true);
+      const { data } = await API.get("/todos");
+      setTodos(data);
+    } catch (error) {
+      console.error("Failed to fetch todos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTodos();
+  }, []);
+
+  // 🔹 Add todo
+  const addTodo = async () => {
+    if (!text.trim()) return;
+
+    try {
+      const { data } = await API.post("/todos", {
+        todoTitle: text,
         priority,
-      },
-    ])
+        status: "pending",
+      });
 
-    setText("")
-    setPriority("medium")
-  }
+      setTodos([data, ...todos]);
+      setText("");
+      setPriority("medium");
+    } catch (error) {
+      console.error("Failed to add todo");
+    }
+  };
 
-  const deleteTodo = (id) => {
-    setTodos(todos.filter((todo) => todo.id !== id))
-  }
+  // 🔹 Delete todo
+  const deleteTodo = async (id) => {
+    try {
+      await API.delete(`/todos/${id}`);
+      setTodos(todos.filter((todo) => todo._id !== id));
+    } catch (error) {
+      console.error("Failed to delete todo");
+    }
+  };
 
-  const toggleComplete = (id) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id
-          ? { ...todo, completed: !todo.completed }
-          : todo
-      )
-    )
-  }
+  // 🔹 Toggle complete / pending
+  const toggleComplete = async (todo) => {
+    try {
+      const newStatus =
+        todo.status === "completed" ? "pending" : "completed";
 
-  const editTodo = (id, newText) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, text: newText } : todo
-      )
-    )
-  }
+      const { data } = await API.put(`/todos/${todo._id}`, {
+        status: newStatus,
+      });
+
+      setTodos(todos.map((t) => (t._id === todo._id ? data : t)));
+    } catch (error) {
+      console.error("Failed to update todo");
+    }
+  };
+
+  // 🔹 Edit todo
+  const editTodo = async (id, newText) => {
+    try {
+      const { data } = await API.put(`/todos/${id}`, {
+        todoTitle: newText,
+      });
+
+      setTodos(todos.map((t) => (t._id === id ? data : t)));
+    } catch (error) {
+      console.error("Failed to edit todo");
+    }
+  };
+
+  // 🔹 Logout
+ 
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-      {/* MAIN CARD */}
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white w-full max-w-xl rounded-xl shadow-lg p-6">
 
-        <h1 className="text-2xl font-bold mb-4 text-center">
-          My Todos
-        </h1>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold">My Todos</h1>
 
-        {/* Input */}
+          <button
+            onClick={handleLogout}
+            className="text-sm px-4 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
+          >
+            Logout
+          </button>
+        </div>
+
+        {/* Input Section */}
         <div className="flex gap-2 mb-5">
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="flex-1 p-2 border rounded"
             placeholder="What needs to be done?"
           />
 
@@ -75,22 +132,22 @@ const TodoPage = () => {
 
           <button
             onClick={addTodo}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 rounded"
+            className="bg-blue-500 text-white px-4 rounded hover:bg-blue-600 transition"
           >
             Add
           </button>
         </div>
 
         {/* Todo List */}
-        <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-          {todos.length === 0 ? (
-            <p className="text-center text-gray-400">
-              No todos yet 👀
-            </p>
+        <div className="space-y-3">
+          {loading ? (
+            <p className="text-center text-gray-400">Loading todos...</p>
+          ) : todos.length === 0 ? (
+            <p className="text-center text-gray-400">No todos yet 👀</p>
           ) : (
             todos.map((todo) => (
               <TodoItem
-                key={todo.id}
+                key={todo._id}
                 todo={todo}
                 onDelete={deleteTodo}
                 onToggle={toggleComplete}
@@ -101,7 +158,7 @@ const TodoPage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default TodoPage
+export default TodoPage;

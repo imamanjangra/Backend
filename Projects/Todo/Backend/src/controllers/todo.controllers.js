@@ -63,12 +63,12 @@ export const deleteTodo = async(req , res) => {
             return res.status(404).json({ message: 'todo not found !!!' });
         }
 
-         if(todo.user.toString() !== req.user._id.toString()){
+        if(todo.user.toString() !== req.user._id.toString()){
             return res.status(401).json({ message: 'not authorized !!!' });
-
         }
-         await Todo.deleteOne();
-        res.json({message : "Todo removed "})
+
+        await Todo.deleteOne({ _id: req.params.id }); // ✅ FIX
+        res.json({ message: "Todo removed" });
     } catch (error) {
         return res.status(400).json({ message: 'Failed to delete todo !!!' });
     }
