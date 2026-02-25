@@ -1,4 +1,4 @@
-import jwt, { decode } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import User from "../Models/user.model.js";
 
 // export const Protect = async(req , res , next) => {
@@ -24,9 +24,10 @@ import User from "../Models/user.model.js";
 //     }
 // }
 
+
 export const Protect = async (req , res , next) => {
     try {
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer" , "");
+        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer " , "");
 
         if(!token){
             return res.status(401).json({message : "Unauthorized request"});

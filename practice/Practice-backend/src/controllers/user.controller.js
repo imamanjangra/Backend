@@ -1,4 +1,4 @@
-import User from "../Models/user.model.js";
+import User from "../Models/user.model.js"
 import jwt from "jsonwebtoken"
 
 const generateAccessAndRefereshTokens = async (userID) => {
@@ -16,7 +16,7 @@ const generateAccessAndRefereshTokens = async (userID) => {
     }
 }
 
-export const registerUser = async (req , res ) => {
+ const registerUser = async (req , res ) => {
     const {FullName , email , username , password } = req.body;
 
     if([FullName , email , username , password ].some( (value) => value?.trim() === "")){
@@ -46,13 +46,15 @@ if(!createdUser){
 res.status(201).json(createdUser)
 
 }
-
+ 
 const loginUser = async (req , res ) => {
+
 const {email , username , password} = req.body;
 
-if([username , email , password].some((value) => value?.trim = "")){
-    return res.status(400).json({message : "All filed are required "});
+if([username , email , password].some((value) => value?.trim === "")){
+    return res.status(400).json({message : "All filed are required "})
 }
+
 
 const user = await User.findOne({
     $or : [{username} , {email}]
