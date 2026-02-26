@@ -1,4 +1,5 @@
 import {User} from "../Models/user.model.js";
+import { Notes } from "../Models/notes.model.js";
 import jwt from "jsonwebtoken"
 
 export const generateAccessAndRefereshTokens = async (userId) => {
@@ -216,124 +217,15 @@ export const updateUserInfo = async (req , res) => {
     }
 }
 
-export const getUserChannelProfile = async(req , res) => {
-    const {username} = req.params
+// export const NotesCount = async (req , res) => {
+//         const notes = await Notes.aggregate(
+//             {
+//                 $group : {
+//                     _id : "$userID",
+//                     totalNotes : {$sum : 1}
+//                 }
+//             }
+//         )
 
-    if(!username){
-        return res.status(400).json({message : "Username is missing"});
-    }
-
-    // const channel = await User.aggregate([
-    //     {
-    //         $match : {
-    //             username : username?.toLowerCase()
-    //         }
-    //     },
-    //     {
-    //         $lookup : {
-    //             from : "subscription",
-    //             localFiled : "_id",
-    //             foreignField : "channel",
-    //             as : "subscribers"
-    //         }
-            
-    //     },
-    //     {
-    //         $lookup : {
-    //             from : "subscription",
-    //             localFiled : "_id",
-    //             foreignField : "subscriber",
-    //             as : "subscribedTo"
-    //         }
-    //     },
-    //     {
-    //         $addFileds : {
-    //             subscribersCount : {
-    //                 $size : "$subscribers"
-    //                 },
-    //             channelsSubscribedToCount : {
-    //                 $size : "$subscribedTo"
-    //             },
-
-    //             isSubscribed : {
-    //                 $cond : {
-    //                     if: {$in : [req.user?._id , "subscribers.subscriber"]},
-    //                     then : true,
-    //                     else : false,
-    //                 }
-    //             }
-
-    //         }
-    //     },
-    //     {
-    //         $project : {
-    //             FullName : 1,
-    //             username : 1,
-    //             subscribersCount : 1,
-    //             channelsSubscribedToCount : 1,
-    //             isSubscribed : 1,
-    //             email : 1
-    //         }
-    //     }
-    // ])
-
-    const channel = await User.aggregate([
-        {
-            $match : {
-                username : username?.toLowerCase()
-            }
-        },
-        {
-            $lookup : {
-                from : "subscriptions",
-                localField : "_id",
-                foreignField : "channel",
-                as : "subscribers"
-            }
-        },
-        {
-            $lookup : {
-                from : "subscriptions",
-                localFiled : "_id",
-                foreignField : "subscriber",
-                as : "subscribedTo",
-            }
-        },
-        {
-            $addFields : {
-                subscriberCount : {
-                    $size : "$subscribers"
-                },
-                channelSubscriberedToCount : {
-                    $size : "$subscribedTo"
-                },
-                isSubscribed : {
-                    $cond : {
-                        if : {$in : [req.user?._id , "$subscribers.subscriber"]},
-                        then : true,
-                        else : false
-                    }
-                }
-            }
-        },
-        {
-            $project : {
-                FullName : 1,
-                username : 1,
-                subscriberCount : 1,
-                channelSubscriberedToCount : 1,
-                isSubscribed : 1,
-                email : 1
-            }
-        }
-
-
-    ])
-
-    if(!channel?.length){
-        return res.status(404).json({message : "channel is does not exits"})
-    }
-
-    return res.status(200).json({message : "User channel fetched successfully" }, channel[0])
-
-}
+//         return res.status(200).json({message : "Total no of Notes = " } , notes)
+// }

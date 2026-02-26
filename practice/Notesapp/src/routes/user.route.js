@@ -6,7 +6,7 @@ import {
   changeCurrentPassword,
   getuserData,
   updateUserInfo,
-  getUserChannelProfile
+  
 } from "../controllers/user.controllers.js";
 import { Router } from "express";
 
@@ -18,5 +18,7 @@ router.route("/logout").post(Protect, LogoutUser);
 router.route("/changepassword").post(Protect, changeCurrentPassword);
 router.route("/userdata").get(Protect, getuserData);
 router.route("/update").patch(Protect, updateUserInfo);
-router.route("/:username").get(Protect , getUserChannelProfile);
+// router.route("/notescount").get(NotesCount);
+
+// router.route("/:username").get(Protect , getUserChannelProfile);
 export default router;
