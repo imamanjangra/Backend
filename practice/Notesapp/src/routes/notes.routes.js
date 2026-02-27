@@ -1,15 +1,16 @@
 import { Protect } from "../middlware/user.middleware.js";
 
-import {createNotes , getNotes , updateNotes , deleteNotes } from "../controllers/notes.controllers.js";
+import {createNotes , getNotesByFolder , updateNotes , deleteNotes , totalNotes , searchNotes } from "../controllers/notes.controllers.js";
 
 import { Router } from "express";
 
 const router = Router();
 
-router.route("/create").post(Protect , createNotes);
-router.route("/getNotes").get(Protect , getNotes);
-router.route("/update").post(Protect , updateNotes);
-router.route("/delete").delete(Protect , deleteNotes );
-
+router.route("/create/:id").post(Protect , createNotes);
+router.route("/getNotes/:folderId").get(Protect , getNotesByFolder);
+router.route("/update/:id").patch(Protect , updateNotes);
+router.route("/delete/:id").delete(Protect , deleteNotes );
+router.route("/totalnotes").post(Protect , totalNotes  );
+router.get("/search", Protect, searchNotes);
 
 export default router;

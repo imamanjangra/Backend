@@ -32,6 +32,11 @@ const notesSchema = new Schema({
     }
 } , {timestamps : true})
 
+notesSchema.index({
+  title: "text",
+  content: "text",
+  tags: "text"
+});
 
 export const Notes = mongoose.model("Notes" , notesSchema)
 

@@ -1,7 +1,6 @@
 import { Notes } from "../Models/notes.model.js";
 
 
-// ================= CREATE NOTE =================
 export const createNotes = async (req, res) => {
   try {
     const { title, content, isPinned, isArchived, tags, folderID } = req.body;
@@ -16,7 +15,7 @@ export const createNotes = async (req, res) => {
       isPinned: isPinned || false,
       isArchived: isArchived || false,
       tags: tags || [],
-      folderID,
+      folderID : req.params.id,
       userID: req.user._id,  
     });
 
@@ -35,28 +34,27 @@ export const createNotes = async (req, res) => {
 
 
 
-// ================= GET NOTES =================
-export const getNotes = async (req, res) => {
+export const getNotesByFolder = async (req, res) => {
   try {
-    const notes = await Notes.find({ userID: req.user._id });
+    const notes = await Notes.find({
+      folderID: req.params.folderId,
+      userID: req.user._id
+    });
 
     return res.status(200).json({
       count: notes.length,
-      notes,
+      notes
     });
 
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Server error while fetching notes",
-      error: error.message,
+    return res.status(400).json({
+      message: "Error fetching notes",
+      error: error.message
     });
   }
 };
 
 
-
-// ================= UPDATE NOTE =================
 export const updateNotes = async (req, res) => {
   try {
     const note = await Notes.findById(req.params.id);
@@ -77,9 +75,8 @@ export const updateNotes = async (req, res) => {
       "isPinned",
       "isArchived",
       "tags",
-      "folderID"
+      
     ];
-
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
         note[field] = req.body[field];
@@ -104,7 +101,6 @@ export const updateNotes = async (req, res) => {
 
 
 
-// ================= DELETE NOTE =================
 export const deleteNotes = async (req, res) => {
   try {
     const note = await Notes.findById(req.params.id);
@@ -131,3 +127,129 @@ export const deleteNotes = async (req, res) => {
     });
   }
 };
+// export const totalNotes = async (req, res) => {
+//   try {
+//     const userId = req.user._id;
+
+//     const result = await Notes.aggregate([
+//       {
+//         $match: { userID: userId }
+//       },
+//       {
+//         $group: {
+//           _id: "$userID",
+//           totalNotes: { $sum: 1 },
+//           archivedNotes: {
+//             $sum: {
+//               $cond: [{ $eq: ["$isArchived", true] }, 1, 0]
+//             }
+//           },
+//           unarchivedNotes: {
+//             $sum: {
+//               $cond: [{ $eq: ["$isArchived", false] }, 1, 0]
+//             }
+//           }
+//         }
+//       }
+//     ]);
+
+//     return res.status(200).json(result[0] || {
+//       totalNotes: 0,
+//       archivedNotes: 0,
+//       unarchivedNotes: 0
+//     });
+
+//   } catch (error) {
+//     return res.status(400).json({
+//       message: "Something went wrong",
+//       error: error.message
+//     });
+//   }
+// };
+
+export const totalNotes = async (req , res ) => {
+ try {
+   const userId = req.user._id;
+ 
+   const result = await Notes.aggregate([
+     {
+       $match : {
+         userID : userId
+       }
+     },
+      {
+         $group : {
+           _id : userId,
+           totalNotes : {$sum : 1},
+           ArchivedNotes : {
+             $sum : {
+               $cond : [{$eq : ["$isArchived" , true]} , 1 , 0]
+             }
+           },
+           unArchivedNotes : {
+             $sum : {
+               $cond : [{$eq : ["$isArchived" , true]} , 1 , 0]
+             }
+           },
+           isPinned : {
+            $sum : {
+              $cond : [{$eq : ["$isPinned" , true]} , 1 , 0]
+            }
+           },
+           unPinned : {
+            $sum : {
+              $cond : [{$eq : ["$isPinned" , false]} , 1 , 0]
+            }
+           }
+         }
+       }
+   ])
+ 
+    return res.status(200).json(result[0] || {
+       totalNotes: 0,
+       ArchivedNotes: 0,
+       unArchivedNotes: 0,
+       isPinned : 0,
+       unPinned : 0
+
+     });
+ } catch (error) {
+  return res.status(400).json({message : "somthing went wrong "})
+ }
+}
+
+export const searchNotes = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query) {
+      return res.status(400).json({
+        message: "Search query is required"
+      });
+    }
+
+    const notes = await Notes.find(
+      {
+        userID: req.user._id,   // VERY IMPORTANT (security)
+        $text: { $search: query }
+      },
+      {
+        score: { $meta: "textScore" }  // relevance score
+      }
+    ).sort({
+      score: { $meta: "textScore" }    // sort by relevance
+    });
+
+    return res.status(200).json({
+      count: notes.length,
+      notes
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Search failed",
+      error: error.message
+    });
+  }
+};
+

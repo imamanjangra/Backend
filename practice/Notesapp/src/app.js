@@ -16,8 +16,10 @@ app.use(cookieParser())
 
 import userRoute from "./routes/user.route.js";
 import notesRoute from "./routes/notes.routes.js"
+import folderRoute from "./routes/folder.routes.js"
 
 app.use("/api/v1/users" , userRoute);
-app.use("/api/v1/notes" , notesRoute)
+app.use("/api/v1/notes" , notesRoute);
+app.use("/api/v1/folder" , folderRoute);
 
 export {app}
