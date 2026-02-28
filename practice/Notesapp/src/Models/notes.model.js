@@ -21,6 +21,10 @@ const notesSchema = new Schema({
         type : [String],
         default : []
     },
+    isDeleted : {
+        type : Boolean,
+        default : false,
+    },
     userID : {
         type : Schema.Types.ObjectId,
         ref : "User",

@@ -1,9 +1,8 @@
 import { Notes } from "../Models/notes.model.js";
 
-
 export const createNotes = async (req, res) => {
   try {
-    const { title, content, isPinned, isArchived, tags, folderID } = req.body;
+    const { title, content, isPinned, isArchived, tags, folderID , isDeleted } = req.body;
 
     if (!title || !content || title.trim() === "" || content.trim() === "") {
       return res.status(400).json({ message: "Title and content are required" });
@@ -17,6 +16,7 @@ export const createNotes = async (req, res) => {
       tags: tags || [],
       folderID : req.params.id,
       userID: req.user._id,  
+      isDeleted : isDeleted || false
     });
 
     return res.status(201).json({
@@ -32,13 +32,12 @@ export const createNotes = async (req, res) => {
   }
 };
 
-
-
 export const getNotesByFolder = async (req, res) => {
   try {
     const notes = await Notes.find({
       folderID: req.params.folderId,
-      userID: req.user._id
+      userID: req.user._id,
+      isDeleted : false
     });
 
     return res.status(200).json({
@@ -54,6 +53,26 @@ export const getNotesByFolder = async (req, res) => {
   }
 };
 
+export const getTrushNotesByFolder = async (req, res) => {
+  try {
+    const notes = await Notes.find({
+      folderID: req.params.folderId,
+      userID: req.user._id,
+      isDeleted : true
+    });
+
+    return res.status(200).json({
+      count: notes.length,
+      notes
+    });
+
+  } catch (error) {
+    return res.status(400).json({
+      message: "Error fetching notes",
+      error: error.message
+    });
+  }
+};
 
 export const updateNotes = async (req, res) => {
   try {
@@ -99,7 +118,35 @@ export const updateNotes = async (req, res) => {
   }
 };
 
+export const removeNote = async (req , res) => {
+ try {
+   const note = await Notes.findById(req.params.id);
+ 
+   if(!note){
+     return res.status(404).json({message : "Note is not found"});
+   }
+ 
+   if(note.userID.toString() !== req.user._id.toString()){
+     return res.status(403).json({message : "This is not your note "});
+   }
+ 
+   let value = !note.isDeleted;;
+   console.log(value);
+ 
+   
+ 
+   const remove = await Notes.findByIdAndUpdate( 
+     req.params.id,
+     { $set: { isDeleted : value } },
+     { new: true }
+   )
+ 
+   return res.status(200).json({remove})
+ } catch (error) {
+    return res.status(400).json({message : "Somthing is wrong "} , error)
+ }
 
+}
 
 export const deleteNotes = async (req, res) => {
   try {
@@ -127,45 +174,6 @@ export const deleteNotes = async (req, res) => {
     });
   }
 };
-// export const totalNotes = async (req, res) => {
-//   try {
-//     const userId = req.user._id;
-
-//     const result = await Notes.aggregate([
-//       {
-//         $match: { userID: userId }
-//       },
-//       {
-//         $group: {
-//           _id: "$userID",
-//           totalNotes: { $sum: 1 },
-//           archivedNotes: {
-//             $sum: {
-//               $cond: [{ $eq: ["$isArchived", true] }, 1, 0]
-//             }
-//           },
-//           unarchivedNotes: {
-//             $sum: {
-//               $cond: [{ $eq: ["$isArchived", false] }, 1, 0]
-//             }
-//           }
-//         }
-//       }
-//     ]);
-
-//     return res.status(200).json(result[0] || {
-//       totalNotes: 0,
-//       archivedNotes: 0,
-//       unarchivedNotes: 0
-//     });
-
-//   } catch (error) {
-//     return res.status(400).json({
-//       message: "Something went wrong",
-//       error: error.message
-//     });
-//   }
-// };
 
 export const totalNotes = async (req , res ) => {
  try {
@@ -253,3 +261,42 @@ export const searchNotes = async (req, res) => {
   }
 };
 
+export const getMonthlyStats = async (req , res) => {
+  try {
+    const {year , month } = req.query;
+
+    if(!year || !month){
+      return res.status(400).json({message : "Year and month is required "});
+    }
+
+    const startDate = new Date(year , month -1 , 1);
+    const endDate = new Date(year , month , 1);
+
+    const stats = await Notes.aggregate([
+      {
+        $match : {
+          userID : req.user._id,
+          createdAt : {
+             $gte: startDate,
+             $lt : endDate
+          }
+        },  
+      },
+      {
+        $group : {
+          _id : {$dayOfMonth : "$createdAt"},
+          count : {$sum : 1}
+        }     
+     },
+     {
+      $sort : {
+        _id : 1
+      }
+     }
+     
+    ])
+    return res.status(200).json({ stats });
+  } catch (error) {
+    return res.status(500).json({ message: "Error generating stats" });
+  }
+}
